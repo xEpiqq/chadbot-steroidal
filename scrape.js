@@ -39,16 +39,16 @@ async function linkedinScraper(access_token, message_quota_per_account) {
   })
 
   const page = await browser.newPage()
-  await page.goto(url_id)
-  await page.setViewport({ width: 950, height: 1000 });
-
-  await page.setCookie({
+    await page.setCookie({
     name: "li_at",
     value: access_token,
     domain: "www.linkedin.com",
     path: "/",
     expires: Date.now() + 1000 * 60 * 60 * 24 * 365,
   });
+  await page.setViewport({ width: 950, height: 1000 });
+
+
 
   // find the number of members in the group
   await page.goto(url_id, { waitUntil: "networkidle2" });
