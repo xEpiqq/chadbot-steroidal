@@ -1,0 +1,24 @@
+{
+  "name": "gmaps-scraper-new",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "zip": "zip function -r *",
+    "sendToLambda": "npm run zip && aws s3 cp function.zip s3://scavenger-chrome-aws && rm function.zip",
+    "createFunction": "aws lambda create-function --function-name \"$1\" --runtime nodejs16.x --handler index.handler --memory-size 1024 --timeout 90 --role arn:aws:iam::758260992716:role/service-role/gmaps-scrape-1-role-6ukxrykp --code S3Bucket=scavenger-chrome-aws,S3Key=function.zip"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@sparticuz/chromium": "^113.0.1",
+    "aws-sdk": "^2.1379.0",
+    "firebase": "^9.22.0",
+    "puppeteer-core": "^20.2.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}
