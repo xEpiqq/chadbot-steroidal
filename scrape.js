@@ -83,13 +83,21 @@ async function linkedinScraper(access_token, message_quota_per_account) {
       continue;
     }
 
-    const firstName = name.split(" ")[0];
-    const href = await row.$eval("a", (el) => el.getAttribute("href"));
-    const messagedArray = newestUserDoc.data().messaged;
-    if (messagedArray.includes(href)) {
-      console.log(`Skipping user with href: ${href}`);
+    let firstName, href, messagedArray;
+
+    try {
+      firstName = name.split(" ")[0];
+      href = await row.$eval("a", (el) => el.getAttribute("href"));
+      messagedArray = newestUserDoc.data().messaged;
+      if (messagedArray.includes(href)) {
+        console.log(`Skipping user with href: ${href}`);
+        continue;
+      }
+    } catch (error) {
+      console.log("error");
       continue;
     }
+
     // try-catch just in case the user is you, you dont have a message button
 
     // if the number_messaged = 0
