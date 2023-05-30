@@ -3,8 +3,9 @@ import stealthPlugin from "puppeteer-extra-plugin-stealth"
 import chromium from "@sparticuz/chromium"
 import { doc, getDoc, setDoc, collection } from 'firebase/firestore';
 import { db } from "./firebase.js"
+import clipboard from 'clipboardy';
 
-const url_id = "https://www.linkedin.com/groups/13948955/members/";
+const url_id = "https://www.linkedin.com/groups/7025688/members/";
 const groupId = url_id.match(/groups\/(\d+)\/members/)[1];
 
 const access_tokens = [
@@ -16,8 +17,9 @@ const message_quota_per_account = 250
 
 function getMessage(name = "My friend") {
 
-  return `${name}, how you doing? Saw you on the web devs group, so I thought i'd reach out.\n\nJust launched an app that helps developers sell websites.\n\nIt changed the game for me, maybe you'd find it helpful too?\n\nLet me know what you think! The site is scavng.com`
+  return `${name}! found you on the web devs page. Seems like you're on the grind!!\n\nfigured I'd reach out personally. I just built an app that helps web devs get more clients.\n\nIt's in early access right now, so I'm only sending it to an exclusive group of legit developers.\n\nGive it a shot, 14 days free. Let me know what you think! scavng.com`
 }
+
 
 
 async function linkedinScraper(access_token, message_quota_per_account) {
@@ -122,15 +124,19 @@ async function linkedinScraper(access_token, message_quota_per_account) {
     } 
 
     await page.waitForSelector(".msg-form__contenteditable");
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
 
     const message = getMessage(firstName);
-    // await page.type(".msg-form__contenteditable", "");
+    clipboard.writeSync(message); // copy message to clipboard
+
 
     await page.focus('.msg-form__contenteditable');
-    await page.keyboard.type(message, { delay: 1 });
 
-    await page.waitForTimeout(500);
+    await page.keyboard.down('Control');
+    await page.keyboard.press('V');
+    await page.keyboard.up('Control');
+    await page.waitForTimeout(200);
+
     await page.click(".msg-form__send-button");
     await page.waitForSelector(".msg-s-message-list");
     await page.waitForTimeout(1000);

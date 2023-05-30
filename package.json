@@ -16,6 +16,7 @@
   "dependencies": {
     "@sparticuz/chromium": "^113.0.1",
     "aws-sdk": "^2.1379.0",
+    "clipboardy": "^3.0.0",
     "firebase": "^9.22.0",
     "puppeteer-core": "^20.2.1",
     "puppeteer-extra": "^3.3.6",
