@@ -9,8 +9,8 @@ const url_id = "https://www.linkedin.com/groups/7025688/members/";
 const groupId = url_id.match(/groups\/(\d+)\/members/)[1];
 
 const access_tokens = [
-  // "AQEDAULpMa0ALvqqAAABh7alYMoAAAGH2rHkylYAldlGfBtWkGMYn24yX7FzhrQFAY5WP09krrmcFlXaRRjZ_sgu04dp83c-CEzRvPQIQ_NgR2rq33WxDb__seqOKzlzmxsugDPD8v3IPPJZBqNAiESO",
-  "AQEDAS2vRC0FLffWAAABh7al9roAAAGH2rJ6ulYAIQ_YamljnqKsk1XW6KMqyQ2owvJ4lmmKaC3zzV8EgF6-Lsx55TeA9YzCuUn8WSVDRHIDNquMriDMh443yH5tPMzdvwl5-ePeqSQb4iISaiFR2N4w"
+  "AQEDAULpMa0CX1tzAAABiGrGJooAAAGIjtKqik0AWU5PvN6OQT-BYafTokn8f8SSPOrfxC6Z4dS0YH_VtHIht5lBzHRUyGLQOFmhz5uPppatpd7GEtSKlJmyY9D56zXD84tvpKcTosddre40fDKbRw2v",
+  // "AQEDAS2vRC0FLffWAAABh7al9roAAAGH2rJ6ulYAIQ_YamljnqKsk1XW6KMqyQ2owvJ4lmmKaC3zzV8EgF6-Lsx55TeA9YzCuUn8WSVDRHIDNquMriDMh443yH5tPMzdvwl5-ePeqSQb4iISaiFR2N4w"
 ]
 
 const message_quota_per_account = 250
@@ -125,6 +125,15 @@ async function linkedinScraper(access_token, message_quota_per_account) {
 
     await page.waitForSelector(".msg-form__contenteditable");
     await page.waitForTimeout(1000);
+
+    // check if div with class msg-s-event__content exists
+    const eventContent = await page.$(".msg-s-event__content");
+    if (eventContent) {
+      const closeIcon = await page.$('.msg-convo-wrapper li-icon[type="close"]');
+      await closeIcon.click();
+      await page.waitForTimeout(1000);
+      continue;
+    }
 
     const message = getMessage(firstName);
     clipboard.writeSync(message); // copy message to clipboard
