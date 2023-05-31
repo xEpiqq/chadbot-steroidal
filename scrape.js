@@ -5,18 +5,17 @@ import { doc, getDoc, setDoc, collection } from 'firebase/firestore';
 import { db } from "./firebase.js"
 import clipboard from 'clipboardy';
 
-const url_id = "https://www.linkedin.com/groups/7025688/members/";
+const url_id = "https://www.linkedin.com/groups/14048479/members/";
 const groupId = url_id.match(/groups\/(\d+)\/members/)[1];
 
 const access_tokens = [
-  "AQEDAULpMa0CX1tzAAABiGrGJooAAAGIjtKqik0AWU5PvN6OQT-BYafTokn8f8SSPOrfxC6Z4dS0YH_VtHIht5lBzHRUyGLQOFmhz5uPppatpd7GEtSKlJmyY9D56zXD84tvpKcTosddre40fDKbRw2v",
-  // "AQEDAS2vRC0FLffWAAABh7al9roAAAGH2rJ6ulYAIQ_YamljnqKsk1XW6KMqyQ2owvJ4lmmKaC3zzV8EgF6-Lsx55TeA9YzCuUn8WSVDRHIDNquMriDMh443yH5tPMzdvwl5-ePeqSQb4iISaiFR2N4w"
+  // "AQEDAULpMa0CX1tzAAABiGrGJooAAAGIjtKqik0AWU5PvN6OQT-BYafTokn8f8SSPOrfxC6Z4dS0YH_VtHIht5lBzHRUyGLQOFmhz5uPppatpd7GEtSKlJmyY9D56zXD84tvpKcTosddre40fDKbRw2v",
+  "AQEDAS2vRC0FLffWAAABh7al9roAAAGH2rJ6ulYAIQ_YamljnqKsk1XW6KMqyQ2owvJ4lmmKaC3zzV8EgF6-Lsx55TeA9YzCuUn8WSVDRHIDNquMriDMh443yH5tPMzdvwl5-ePeqSQb4iISaiFR2N4w"
 ]
 
 const message_quota_per_account = 250
 
 function getMessage(name = "My friend") {
-
   return `${name}! found you on the web devs page. Seems like you're on the grind!!\n\nfigured I'd reach out personally. I just built an app that helps web devs get more clients.\n\nIt's in early access right now, so I'm only sending it to an exclusive group of legit developers.\n\nGive it a shot, 14 days free. Let me know what you think! scavng.com`
 }
 
@@ -36,25 +35,34 @@ async function linkedinScraper(access_token, message_quota_per_account) {
   puppeteerExtra.use(stealthPlugin())
 
   const browser = await puppeteerExtra.launch({
-      headless: false,
-      executablePath: "/usr/bin/google-chrome"
-  })
+    headless: false,
+    executablePath: "/usr/bin/google-chrome",
+    args: ["--start-maximized"]
+  });
 
   const page = await browser.newPage()
-    await page.setCookie({
-    name: "li_at",
-    value: access_token,
-    domain: "www.linkedin.com",
-    path: "/",
-    expires: Date.now() + 1000 * 60 * 60 * 24 * 365,
+
+
+  await page.setCookie({
+  name: "li_at",
+  value: access_token,
+  domain: "www.linkedin.com",
+  path: "/",
+  expires: Date.now() + 1000 * 60 * 60 * 24 * 365,
   });
-  await page.setViewport({ width: 950, height: 1000 });
+
+
+
 
 
 
   // find the number of members in the group
   await page.goto(url_id, { waitUntil: "networkidle2" });
   await page.waitForSelector(".groups-members-list h1");
+
+  const chevronDown = await page.$('li-icon[type="chevron-down"]');
+  await chevronDown.click();
+
   const membersText = await page.$eval(
     ".groups-members-list h1",
     (el) => el.textContent
@@ -67,6 +75,17 @@ async function linkedinScraper(access_token, message_quota_per_account) {
     if (number_messaged >= message_quota_per_account) {
       break;
     }
+
+    // // check if any windows are open at the beginning of loop and close them all
+    // try {
+    //   const closeIcon = await page.$$('.msg-convo-wrapper li-icon[type="close"]');
+    //   for (let i = 0; i < closeIcon.length; i++) {
+    //     await closeIcon[i].click();
+    //   }
+
+    // } catch (error) {
+    //   console.log("error");
+    // }
 
     const newestUserDoc = await getDoc(userRef);
     const contactRows = await page.$$(".ui-entity-action-row");
@@ -81,6 +100,10 @@ async function linkedinScraper(access_token, message_quota_per_account) {
       await page.evaluate(() => {
         window.scrollTo(0, document.body.scrollHeight);
       });
+      const loadButton = await page.$(".scaffold-finite-scroll__load-button");
+      if (loadButton) {
+        await loadButton.click();
+      }
       await page.waitForSelector(".ui-entity-action-row");
       continue;
     }
@@ -123,8 +146,10 @@ async function linkedinScraper(access_token, message_quota_per_account) {
       }
     } 
 
+
     await page.waitForSelector(".msg-form__contenteditable");
     await page.waitForTimeout(1000);
+
 
     // check if div with class msg-s-event__content exists
     const eventContent = await page.$(".msg-s-event__content");
@@ -136,28 +161,27 @@ async function linkedinScraper(access_token, message_quota_per_account) {
     }
 
     const message = getMessage(firstName);
-    clipboard.writeSync(message); // copy message to clipboard
-
+    clipboard.writeSync(message);
 
     await page.focus('.msg-form__contenteditable');
-
     await page.keyboard.down('Control');
     await page.keyboard.press('V');
     await page.keyboard.up('Control');
     await page.waitForTimeout(200);
 
     await page.click(".msg-form__send-button");
-    await page.waitForSelector(".msg-s-message-list");
+    await page.waitForSelector(".msg-s-message-list");    
+    // page.waitForSelector({ timeout: 2000 })
     await page.waitForTimeout(1000);
 
     // close the message window
     const closeIcon = await page.$('.msg-convo-wrapper li-icon[type="close"]');
     await closeIcon.click();
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(200);
 
     // scroll down a little bit
     await page.evaluate(() => {
-      window.scrollBy(0, 100);
+      window.scrollBy(0, 50);
     });
 
     const newHrefs = [...newestUserDoc.data().messaged, href];
